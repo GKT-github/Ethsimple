@@ -1,0 +1,22 @@
+%YAML:1.0
+---
+FocalLength: 369.50417228136058
+Intrisic: !!opencv-matrix
+   rows: 3
+   cols: 3
+   dt: f
+   data: [ 369.504181, 0., 640., 0., 369.504181, 400., 0., 0., 1. ]
+Rotation: !!opencv-matrix
+   rows: 3
+   cols: 3
+   dt: f
+   data: [ -1.83697015e-16, 0.939692616, -0.342020154, -1.,
+       -1.72618737e-16, 6.28280799e-17, 0., 0.342020154, 0.939692616 ]
+Translation: !!opencv-matrix
+   rows: 3
+   cols: 1
+   dt: d
+   data: [ 0., 0., 0. ]
+CameraName: Right
+CameraIP: "192.168.45.13"
+CameraPort: 5023

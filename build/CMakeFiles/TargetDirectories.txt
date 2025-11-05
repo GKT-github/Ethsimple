@@ -1,0 +1,8 @@
+/home/nano/Documents/Surround-View-simplified/build/CMakeFiles/cuda_kernels.dir
+/home/nano/Documents/Surround-View-simplified/build/CMakeFiles/SurroundViewSimple.dir
+/home/nano/Documents/Surround-View-simplified/build/CMakeFiles/edit_cache.dir
+/home/nano/Documents/Surround-View-simplified/build/CMakeFiles/rebuild_cache.dir
+/home/nano/Documents/Surround-View-simplified/build/CMakeFiles/list_install_components.dir
+/home/nano/Documents/Surround-View-simplified/build/CMakeFiles/install.dir
+/home/nano/Documents/Surround-View-simplified/build/CMakeFiles/install/local.dir
+/home/nano/Documents/Surround-View-simplified/build/CMakeFiles/install/strip.dir

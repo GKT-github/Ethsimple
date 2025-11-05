@@ -1,0 +1,6 @@
+# Camera Configuration
+# Edit these values to match your camera settings
+
+camera:
+  address: "192.168.45.3"
+  port: 5020
