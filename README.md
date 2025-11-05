@@ -1,3 +1,26 @@
+Git initial commit commands
+  794  git init
+  795  git add .
+  796  git commit -m "Initial commit of Surround-View-simplified"
+  797  git remote add origin https://github.com/GKT-github/Ethsimple.git
+  798  git branch -M main
+  799  git push -u origin main
+  800  git brnch -M main
+  801  git branch -M main
+  802  git push -u origin main
+
+Second changes:
+	git status
+	git add . or git add path/to/yourfile.cpp
+	git commit -m "Describe what you changed"
+	git push (if you have alredy set your remote origin and main) or git push -u origin main(if not yet linked)
+	
+| Goal                                  | Command                        |
+| ------------------------------------- | ------------------------------ |
+| Discard all local changes and commits | `git reset --hard origin/main` |
+| Delete untracked files                | `git clean -fd`                |
+| Make sure you’re up to date           | `git fetch origin`             |
+
 # Simple Surround View System
 
 A streamlined 4-camera 360° surround view system for Jetson Nano with spherical bowl rendering.
