@@ -105,6 +105,10 @@ private:
      */
     void textureUpload(const cv::cuda::GpuMat& frame);
     
+    // Bowl geometry data (ADD THESE)
+    std::vector<float> bowl_vertices;
+    std::vector<unsigned int> bowl_indices;
+    size_t bowl_index_count;
     // Window
     GLFWwindow* window;
     int screen_width;

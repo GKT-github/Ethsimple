@@ -41,7 +41,25 @@ void SVGainCompensator::computeGains(const std::vector<cv::Point>& corners, cons
        gains(i, 0) = gains_[i].at<double>(0, 0);
     }
 }
+void SVGainCompensator::init(const std::vector<cv::cuda::GpuMat>& images, 
+                              const std::vector<cv::Point>& corners,
+                              const std::vector<cv::cuda::GpuMat>& masks)
+{
+    computeGains(corners, images, masks);
+}
 
+void SVGainCompensator::apply(const cv::cuda::GpuMat& src, cv::cuda::GpuMat& dst, int index)
+{
+    src.copyTo(dst);
+    apply_compensator(index, dst);
+}
+
+void SVGainCompensator::recompute(const std::vector<cv::cuda::GpuMat>& images,
+                                   const std::vector<cv::Point>& corners,
+                                   const std::vector<cv::cuda::GpuMat>& masks)
+{
+    computeGains(corners, images, masks);
+}
 
 bool SVGainCompensator::apply_compensator(const int idx, cv::cuda::GpuMat& warp_img, cv::cuda::Stream& streamObj)
 {

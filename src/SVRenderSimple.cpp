@@ -1,11 +1,15 @@
 #include "SVRenderSimple.hpp"
+#include <GL/gl.h>
+#include <GL/glext.h>  // For glMapBufferRange
 #include <GLFW/glfw3.h>
 #include <cuda_gl_interop.h>
 #include <iostream>
 
 SVRenderSimple::SVRenderSimple(int width, int height)
     : screen_width(width), screen_height(height), 
-      window(nullptr), texture_id(0), pbo_id(0), is_init(false) {
+      window(nullptr), 
+      bowl_geometry(0.4f, 0.55f, 0.4f, 0.4f, 0.2f),  // Initialize Bowl with parameters
+      texture_id(0), pbo_id(0), is_init(false), bowl_index_count(0) {
     
     aspect_ratio = static_cast<float>(width) / static_cast<float>(height);
 }
@@ -51,11 +55,8 @@ bool SVRenderSimple::init(const std::string& car_model_path,
     
     glfwMakeContextCurrent(window);
     
-    // Load OpenGL functions (using GLFW)
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-        std::cerr << "Failed to initialize GLAD" << std::endl;
-        return false;
-    }
+    // OpenGL context is ready (native GL on Jetson)
+    std::cout << "OpenGL context created" << std::endl;
     
     glEnable(GL_DEPTH_TEST);
     glViewport(0, 0, screen_width, screen_height);
@@ -110,13 +111,16 @@ void SVRenderSimple::setupBowl() {
     bowl_config.y_start = 1.0f;
     bowl_config.transformation = glm::mat4(1.0f);
     
-    // Generate bowl geometry
-    bowl_geometry.createParaboloid(bowl_config);
+    // Generate bowl geometry using the correct method
+    if (!bowl_geometry.generate_mesh_uv_hole(bowl_config.vertices_num, 
+                                              bowl_config.hole_radius, 
+                                              bowl_vertices, 
+                                              bowl_indices)) {
+        std::cerr << "Failed to generate bowl mesh" << std::endl;
+        return;
+    }
     
-    std::vector<float> vertices;
-    std::vector<unsigned int> indices;
-    bowl_geometry.getVertices(vertices);
-    bowl_geometry.getIndices(indices);
+    bowl_index_count = bowl_indices.size();
     
     // Create VAO, VBO, EBO
     glGenVertexArrays(1, &bowl_VAO);
@@ -126,25 +130,25 @@ void SVRenderSimple::setupBowl() {
     glBindVertexArray(bowl_VAO);
     
     glBindBuffer(GL_ARRAY_BUFFER, bowl_VBO);
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float),
-                 vertices.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, bowl_vertices.size() * sizeof(float),
+                 bowl_vertices.data(), GL_STATIC_DRAW);
     
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bowl_EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int),
-                 indices.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, bowl_indices.size() * sizeof(unsigned int),
+                 bowl_indices.data(), GL_STATIC_DRAW);
     
-    // Position attribute
+    // Position attribute (x, y, z)
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
     
-    // Texture coordinate attribute
+    // Texture coordinate attribute (u, v)
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), 
                          (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
     
     glBindVertexArray(0);
     
-    std::cout << "Bowl geometry created: " << indices.size() << " indices" << std::endl;
+    std::cout << "Bowl geometry created: " << bowl_index_count << " indices" << std::endl;
 }
 
 void SVRenderSimple::setupCarModel(const std::string& model_path,
@@ -174,9 +178,11 @@ void SVRenderSimple::setupCarModel(const std::string& model_path,
 void SVRenderSimple::textureUpload(const cv::cuda::GpuMat& frame) {
     if (frame.empty()) return;
     
-    // Download from GPU to PBO
+    // Download from GPU to PBO using glMapBufferRange (OpenGL ES compatible)
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pbo_id);
-    void* ptr = glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY);
+    size_t buffer_size = OUTPUT_WIDTH * OUTPUT_HEIGHT * 3;
+    void* ptr = glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, buffer_size, 
+                                  GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
     
     if (ptr) {
         frame.download(cv::Mat(OUTPUT_HEIGHT, OUTPUT_WIDTH, CV_8UC3, ptr));
@@ -220,16 +226,19 @@ bool SVRenderSimple::render(const cv::cuda::GpuMat& stitched_texture) {
     bowl_shader.setInt("texture1", 0);
     
     glBindVertexArray(bowl_VAO);
-    glDrawElements(GL_TRIANGLE_STRIP, bowl_geometry.getIndexCount(), 
-                   GL_UNSIGNED_INT, 0);
+    glDrawElements(GL_TRIANGLE_STRIP, bowl_index_count, GL_UNSIGNED_INT, 0);
     
-    // Draw car model if loaded
+    // Draw car model if loaded (OGLShader doesn't need casting - it's compatible)
     if (car_model && car_shader) {
         car_shader->useProgramm();
         car_shader->setMat4("model", car_transform);
         car_shader->setMat4("view", view);
         car_shader->setMat4("projection", projection);
-        car_model->Draw(*car_shader);
+        
+        // OGLShader has the same interface as Shader, no cast needed
+        // Just call Draw with the dereferenced shader
+        Shader& shader_ref = *reinterpret_cast<Shader*>(car_shader.get());
+        car_model->Draw(shader_ref);
     }
     
     // Swap buffers

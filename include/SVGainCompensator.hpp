@@ -28,6 +28,16 @@ public:
     void computeGains(const std::vector<cv::Point>& corners, const std::vector<cv::cuda::GpuMat>& warp_imgs,
                       const std::vector<cv::cuda::GpuMat>& warp_masks) override;
     bool apply_compensator(const int idx, cv::cuda::GpuMat& warp_img, cv::cuda::Stream& streamObj = cv::cuda::Stream::Null()) override;
+
+    void init(const std::vector<cv::cuda::GpuMat>& images, 
+              const std::vector<cv::Point>& corners,
+              const std::vector<cv::cuda::GpuMat>& masks);
+    
+    void apply(const cv::cuda::GpuMat& src, cv::cuda::GpuMat& dst, int index);
+    
+    void recompute(const std::vector<cv::cuda::GpuMat>& images,
+                   const std::vector<cv::Point>& corners,
+                   const std::vector<cv::cuda::GpuMat>& masks);
 };
 
 

@@ -17,15 +17,17 @@ extern "C" {
 			    cudaStream_t streamimage, cudaStream_t streammask);
 
 	void weightBlendCUDA(const cv::cuda::PtrStep<short> src, const cv::cuda::PtrStepf src_weight,
-	    cv::cuda::PtrStep<short> dst, cv::cuda::PtrStepf dst_weight, const cv::Size& img_size, int dx, int dy);
+	    cv::cuda::PtrStep<short> dst, cv::cuda::PtrStepf dst_weight, int width, int height, int dx, int dy);
 	void weightBlendCUDA_Async(const cv::cuda::PtrStep<short> src, const cv::cuda::PtrStepf src_weight,
-	    cv::cuda::PtrStep<short> dst, cv::cuda::PtrStepf dst_weight, const cv::Size& img_size, int dx, int dy,
+	    cv::cuda::PtrStep<short> dst, cv::cuda::PtrStepf dst_weight, int width, int height, int dx, int dy,
 				   cudaStream_t stream_dst);
 
 	void addSrcWeightGpu32F(const cv::cuda::PtrStep<short> src, const cv::cuda::PtrStepf src_weight,
-				cv::cuda::PtrStep<short> dst, cv::cuda::PtrStepf dst_weight, cv::Rect &rc);
+				cv::cuda::PtrStep<short> dst, cv::cuda::PtrStepf dst_weight, 
+				int x_offset, int y_offset, int width, int height);
 	void addSrcWeightGpu32F_Async(const cv::cuda::PtrStep<short> src, const cv::cuda::PtrStepf src_weight,
-				cv::cuda::PtrStep<short> dst, cv::cuda::PtrStepf dst_weight, cv::Rect &rc,
+				cv::cuda::PtrStep<short> dst, cv::cuda::PtrStepf dst_weight, 
+				int x_offset, int y_offset, int width, int height,
 				cudaStream_t stream_dst);
 
 	void normalizeUsingWeightMapGpu32F(const cv::cuda::PtrStepf weight, cv::cuda::PtrStep<short> src,
@@ -171,9 +173,9 @@ void SVFeatherBlender::feed(cv::cuda::GpuMat& _img, cv::cuda::GpuMat& _mask, con
 	createWeightMap(_mask, *weight_map_, streamObj);
 
 	if (_cudaStreamDst && _cudaStreamDst_weight)
-	    weightBlendCUDA_Async(_img, *weight_map_, dst_, dst_weight_map_, _img.size(), dx, dy, _cudaStreamDst);
+	    weightBlendCUDA_Async(_img, *weight_map_, dst_, dst_weight_map_, _img.size().width, _img.size().height, dx, dy, _cudaStreamDst);
 	else
-	    weightBlendCUDA(_img, *weight_map_, dst_, dst_weight_map_, _img.size(), dx, dy);
+	    weightBlendCUDA(_img, *weight_map_, dst_, dst_weight_map_, _img.size().width, _img.size().height, dx, dy);
 
 }
 
@@ -194,9 +196,9 @@ void SVFeatherBlender::feed(cv::cuda::GpuMat& _img, cv::cuda::GpuMat& _mask, con
 	}
 
 	if (_cudaStreamDst && _cudaStreamDst_weight)
-	    weightBlendCUDA_Async(_img, *weight_map_, dst_, dst_weight_map_, _img.size(), dx, dy, _cudaStreamDst);
+	    weightBlendCUDA_Async(_img, *weight_map_, dst_, dst_weight_map_, _img.size().width, _img.size().height, dx, dy, _cudaStreamDst);
 	else
-	    weightBlendCUDA(_img, *weight_map_, dst_, dst_weight_map_, _img.size(), dx, dy);
+	    weightBlendCUDA(_img, *weight_map_, dst_, dst_weight_map_, _img.size().width, _img.size().height, dx, dy);
 
 }
 
@@ -394,7 +396,7 @@ void SVMultiBandBlender::feed(const cv::cuda::GpuMat& _img, const int idx, cv::c
            auto& weight_pyr_gauss = gpu_weight_pyr_gauss_vec_[idx][i];
            auto dst_band_weight = gpu_dst_band_weights_[i](rc);
 
-           addSrcWeightGpu32F_Async(src_pyr_laplace, weight_pyr_gauss, dst_pyr_laplace, dst_band_weight, rc, _cudaStreamDst);
+           addSrcWeightGpu32F_Async(src_pyr_laplace, weight_pyr_gauss, dst_pyr_laplace, dst_band_weight, rc.x, rc.y, rc.width, rc.height, _cudaStreamDst);
 
            // div size by 2
            x_tl >>= 1; y_tl >>= 1;

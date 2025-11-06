@@ -115,11 +115,11 @@ bool SVStitcherSimple::setupWarpMaps() {
     warp_corners.resize(num_cameras);
     warp_sizes.resize(num_cameras);
     
-    // Create spherical warper
-    cv::Ptr<cv::WarperCreator> warper_creator = cv::makePtr<cv::SphericalWarper>();
-    cv::Ptr<cv::detail::RotationWarper> warper = 
-        warper_creator->create(static_cast<float>(scale_factor * focal_length));
-    
+    // Create spherical warper    ////
+    // cv::Ptr<cv::WarperCreator> warper_creator = cv::makePtr<cv::SphericalWarper>();
+    // cv::Ptr<cv::detail::RotationWarper> warper = 
+    //     warper_creator->create(static_cast<float>(scale_factor * focal_length));
+    auto warper = cv::makePtr<cv::detail::SphericalWarper>(static_cast<float>(scale_factor * focal_length));
     std::cout << "Creating spherical warp maps..." << std::endl;
     
     cv::Size input_size(CAMERA_WIDTH, CAMERA_HEIGHT);
@@ -167,11 +167,12 @@ bool SVStitcherSimple::createOverlapMasks(const std::vector<cv::cuda::GpuMat>& s
     
     std::cout << "Creating full overlap masks..." << std::endl;
     
-    // Create warper for mask generation
-    cv::Ptr<cv::WarperCreator> warper_creator = cv::makePtr<cv::SphericalWarper>();
-    cv::Ptr<cv::detail::RotationWarper> warper = 
-        warper_creator->create(static_cast<float>(scale_factor * focal_length));
-    
+    // Create warper for mask generation ////
+    // cv::Ptr<cv::WarperCreator> warper_creator = cv::makePtr<cv::SphericalWarper>();
+    // cv::Ptr<cv::detail::RotationWarper> warper = 
+    //     warper_creator->create(static_cast<float>(scale_factor * focal_length));
+    auto warper = cv::makePtr<cv::detail::SphericalWarper>(static_cast<float>(scale_factor * focal_length));
+
     for (int i = 0; i < num_cameras; i++) {
         // Create full white mask for entire image
         cv::Size scaled_size(CAMERA_WIDTH * scale_factor, CAMERA_HEIGHT * scale_factor);
@@ -280,7 +281,7 @@ bool SVStitcherSimple::stitch(const std::vector<cv::cuda::GpuMat>& frames,
         warped_frame.convertTo(warped_16s, CV_16SC3);
         
         // Feed to blender
-        blender->feed(warped_16s, blend_masks[i], warp_corners[i]);
+        blender->feed(warped_16s, blend_masks[i], i);
     }
     
     // Blend

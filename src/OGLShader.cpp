@@ -1,7 +1,7 @@
-#include "OGLShader.hpp"
-#include <fstream>
-#include <sstream>
-#include <iostream>
+#include "SVRenderSimple.hpp"
+#include <GLES3/gl3.h>
+#include <GLES3/gl3ext.h>
+#include <GLFW/glfw3.h>
 
 OGLShader::OGLShader() : ID(0) {
 }

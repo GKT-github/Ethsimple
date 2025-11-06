@@ -2,7 +2,7 @@
 #define OGL_SHADER_HPP
 
 #include <string>
-#include <GL/gl.h>
+#include <GLES3/gl3.h>  // OpenGL ES 3.x for Jetson
 #include <glm/glm.hpp>
 
 /**

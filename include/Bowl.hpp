@@ -33,8 +33,12 @@ struct ConfigBowl
 };
 
 
-class Bowl
-{
+class Bowl {
+public:
+    void createParaboloid(const ConfigBowl& config);
+    void getVertices(std::vector<float>& verts);
+    void getIndices(std::vector<unsigned int>& inds);
+    size_t getIndexCount() const;
 private:
     constexpr static float eps_uv = 1e-5f;
     constexpr static float PI = 3.14159265359f;
@@ -138,7 +142,9 @@ private:
     int x_segment, y_segment;
 public:
     HemiSphere(const int x_segm, const int y_segm, const float center[3] = default_center)
-            : x_segment(x_segm), y_segment(y_segm), hole_rad(0.0f)
+        : hole_rad(0.5f),  // Initialize hole_rad before y_segment
+        x_segment(x_segm), 
+        y_segment(y_segm)
     {
             cen[0] = center[0];
             cen[1] = center[1];
